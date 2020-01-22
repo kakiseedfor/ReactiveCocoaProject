@@ -1,0 +1,23 @@
+//
+//  Prefix header
+//
+//  The contents of this file are implicitly included at the beginning of every source file.
+//
+
+#import <Availability.h>
+
+#ifndef __IPHONE_5_0
+#warning "This project uses features only available in iOS SDK 5.0 and later."
+#endif
+
+#ifdef __OBJC__
+    #import <UIKit/UIKit.h>
+    #import <Foundation/Foundation.h>
+
+    #import "CentreMediator.h"
+    #import "UIView+Utility.h"
+    #import "CentreMediator+Home.h"
+    #import "CentreMediator+Search.h"
+#endif
+
+#define StoryboardWithNameAndIdentifier(name, identifier) [[UIStoryboard storyboardWithName:name bundle:NSBundle.mainBundle] instantiateViewControllerWithIdentifier:identifier]
