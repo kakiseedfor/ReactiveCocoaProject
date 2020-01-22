@@ -105,8 +105,8 @@
 		EC20E11223D83BF5003A6DB8 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				EC20E11323D83BF5003A6DB8 /* Search */,
 				EC20E12023D83BF5003A6DB8 /* Mediator */,
+				EC20E11323D83BF5003A6DB8 /* Search */,
 				EC20E12723D83BF5003A6DB8 /* Login */,
 				EC20E12F23D83BF5003A6DB8 /* Utility */,
 			);
@@ -120,8 +120,8 @@
 				EC20E11423D83BF5003A6DB8 /* ViewModel */,
 				EC20E11823D83BF5003A6DB8 /* RWSearchTarget.h */,
 				EC20E11E23D83BF5003A6DB8 /* RWSearchTarget.m */,
-				EC20E11923D83BF5003A6DB8 /* RWSearchViewCell.m */,
 				EC20E11F23D83BF5003A6DB8 /* RWSearchViewCell.h */,
+				EC20E11923D83BF5003A6DB8 /* RWSearchViewCell.m */,
 				EC20E11A23D83BF5003A6DB8 /* RWSearchViewController.h */,
 				EC20E11723D83BF5003A6DB8 /* RWSearchViewController.m */,
 			);
@@ -131,8 +131,8 @@
 		EC20E11423D83BF5003A6DB8 /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
-				EC20E11523D83BF5003A6DB8 /* RWSearchViewModel.m */,
 				EC20E11623D83BF5003A6DB8 /* RWSearchViewModel.h */,
+				EC20E11523D83BF5003A6DB8 /* RWSearchViewModel.m */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -140,8 +140,8 @@
 		EC20E11B23D83BF5003A6DB8 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				EC20E11C23D83BF5003A6DB8 /* RWSearchModel.m */,
 				EC20E11D23D83BF5003A6DB8 /* RWSearchModel.h */,
+				EC20E11C23D83BF5003A6DB8 /* RWSearchModel.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";

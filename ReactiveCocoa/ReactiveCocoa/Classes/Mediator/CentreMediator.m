@@ -82,15 +82,102 @@
     invocation.selector = actionSelector;
     invocation.target = targetInstance;
     
-    NSUInteger count = 2;
-    id parameter = nil;
-    while ((parameter = va_arg(parameters, id))){
-        [invocation setArgument:&parameter atIndex:count];
-        count++;
+    for (NSUInteger i = 2; i < methodSignature.numberOfArguments; i++) {
+        NSString *typeName = [NSString stringWithUTF8String:[methodSignature getArgumentTypeAtIndex:i]];
+        
+        if ([typeName isEqualToString:@"c"]){
+            char parameter = '\0';
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"i"]){
+            int parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"s"]){
+            short parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"l"]){
+            long parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"q"]){
+            long long parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"C"]){
+            unsigned char parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"I"]){
+            unsigned int parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"L"]){
+            unsigned long parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"Q"]){
+            unsigned long long parameter = 0;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"f"]){
+            float parameter = 0.f;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"d"]){
+            double parameter = 0.f;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"B"]){
+            bool parameter;
+            parameter = va_arg(parameters, typeof(parameter));
+            [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"*"]){
+            char *parameter = NULL;
+            parameter = va_arg(parameters, typeof(parameter));
+            !parameter ? : [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"@"]) {
+            id parameter = nil;
+            parameter = va_arg(parameters, id);
+            !parameter ? : [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@"#"]) {
+            Class parameter = NULL;
+            parameter = va_arg(parameters, typeof(parameter));
+            !parameter ? : [invocation setArgument:&parameter atIndex:i];
+        }else if ([typeName isEqualToString:@":"]) {
+            SEL parameter = NSSelectorFromString(@"");
+            parameter = va_arg(parameters, typeof(parameter));
+            !parameter ? : [invocation setArgument:&parameter atIndex:i];
+        }else if ([self isArray:typeName] || [self isPointer:typeName]){
+            void *parameter = NULL;
+            parameter = va_arg(parameters, typeof(parameter));
+            !parameter ? : [invocation setArgument:&parameter atIndex:i];
+        }else if ([self isStructure:typeName]){
+            
+        }
+        NSLog(@"%@",typeName);
     }
     va_end(parameters);
-    
     [invocation invoke];
+}
+
+- (BOOL)isArray:(NSString *)typeName{
+    NSString *arrayRegex = @"\\[[0-9]+[a-zA-Z]+\\]";
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@",arrayRegex];
+    return [predicate evaluateWithObject:typeName];
+}
+
+- (BOOL)isPointer:(NSString *)typeName{
+    NSString *pointerRegex = @"\\^[a-zA-Z]+";
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@",pointerRegex];
+    return [predicate evaluateWithObject:typeName];
+}
+
+- (BOOL)isStructure:(NSString *)typeName{
+    NSString *structureRegex = @"\\{[a-zA-Z]+=[[c,i,s,l,q,C,I,S,L,Q,f,d,B,v,*,#,:]+,\\[[0-9]+[a-zA-Z]+\\]]\\}";
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF MATCHES %@",structureRegex];
+    return [predicate evaluateWithObject:typeName];
 }
 
 @end

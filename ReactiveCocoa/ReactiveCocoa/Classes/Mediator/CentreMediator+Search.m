@@ -11,10 +11,15 @@
 extern NSString * CMRWSearchViewTarget;
 extern NSString * CMActionShowRWSearchVC;
 
+typedef struct Temp {
+    int ttttt;
+}Temp;
+
 @implementation CentreMediator (Search)
 
 - (void)CM_PushRWSearchViewController{
-    [self openFromNative:CMRWSearchViewTarget action:CMActionShowRWSearchVC, @"Search ViewController", nil];
+    Temp ttt = {10086};
+    [self openFromNative:CMRWSearchViewTarget action:CMActionShowRWSearchVC, @"OFFlickr Search",ttt, nil];
 }
 
 @end
