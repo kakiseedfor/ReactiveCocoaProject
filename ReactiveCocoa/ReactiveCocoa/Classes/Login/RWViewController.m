@@ -31,7 +31,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.signInService = [[RWDummySignInService alloc] init];
+    _signInService = [[RWDummySignInService alloc] init];
     
     /* username.rac_textSignal->map[信号NSString类型转换]->Boolean->map[信号Boolean类型转换]->UIColor类型->backgroundColor
                                                         ▽
@@ -41,6 +41,9 @@
      */
     
     @weakify(self);
+    RAC(_signInService, username) = _usernameTextField.rac_textSignal;
+    RAC(_signInService, password) = _passwordTextField.rac_textSignal;
+    
     _validUsernameSignal = [_usernameTextField.rac_textSignal map:^id _Nullable(NSString * _Nullable value) {
         @strongify(self);
         return @([self isValidUsername:value]);
@@ -87,12 +90,16 @@
     /*
      UIControl事件信号->flattenMap[信号转换]->ServiceSingal->subscribeNext
                             ▽
-                        RACCommand[命令事件]->RACSignal[已注册在命令中的信号]->
+                        RACCommand[命令事件]->RACSignal[已注册在命令中的信号]->switchToLatest subscribeNext
+     reduce block的入参和源信号一一对应
+     
+     Note that operators applied _after_ -flattenMap: behave differently from operators _within_ -flattenMap:. See the Examples section below.[放在 -flattenMap 块内执行的操作与放在 -flattenMap 块外执行的操作是不一样的，前者多次执行，后者执行一次]
      */
-    [[[_signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] flattenMap:^RACSignal * _Nullable(__kindof UIControl * _Nullable value) {
+    RACSignal *signal = [[_signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] flattenMap:^RACSignal * _Nullable(__kindof UIControl * _Nullable value) {
         @strongify(self);
         return [self.signInService signInWithSingal:self.usernameTextField.text password:self.passwordTextField.text];
-    }] subscribeNext:^(NSNumber * _Nullable state) {
+    }];
+    [signal subscribeNext:^(NSNumber * _Nullable state) {
         if (state.integerValue == LoginFinish) {
             [CentreMediator.shareCentreMediator CM_PushRWSearchViewController];
         }

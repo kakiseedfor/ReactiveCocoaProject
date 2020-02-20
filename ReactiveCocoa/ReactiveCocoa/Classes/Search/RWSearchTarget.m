@@ -12,23 +12,21 @@
 NSString * CMRWSearchViewTarget = @"";
 NSString * CMActionShowRWSearchVC = @"";
 
-typedef struct Temp {
-    int ttttt;
-}Temp;
-
 @implementation RWSearchTarget
 
 + (void)load{
     CMRWSearchViewTarget = NSStringFromClass(RWSearchTarget.class);
-    CMActionShowRWSearchVC = NSStringFromSelector(@selector(pushRWSearchViewController:charTest:));
+    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+    CMActionShowRWSearchVC = NSStringFromSelector(@selector(pushRWSearchViewController:));
+#pragma clang diagnostic pop
 }
 
-- (void)pushRWSearchViewController:(NSString *)title charTest:(Temp)charTest{
+- (void)pushRWSearchViewController:(NSString *)title{
     RWSearchViewController *searchViewController = StoryboardWithNameAndIdentifier(@"Main", @"RWSearchViewController");
     searchViewController.navigationItem.title = title;
     [UIView.currentViewController.navigationController pushViewController:searchViewController animated:YES];
-    
-//    NSLog(@"%d",charTest);
 }
 
 @end

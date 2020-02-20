@@ -18,6 +18,8 @@ typedef void (^RWSignInResponse)(LoginState);
 
 @interface RWDummySignInService : NSObject
 @property (strong, nonatomic) RACCommand *additionalCommand;
+@property (strong, nonatomic) NSString *username;
+@property (strong, nonatomic) NSString *password;
 
 - (RACSignal *)signInWithSingal:(NSString *)username password:(NSString *)password;
 

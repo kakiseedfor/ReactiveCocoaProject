@@ -10,6 +10,11 @@
 #import <ReactiveCocoa/RACEXTScope.h>
 #import "RWDummySignInService.h"
 
+@interface RWDummySignInService ()
+@property (strong, nonatomic) RACSignal *signInSingal;
+
+@end
+
 @implementation RWDummySignInService
 
 - (instancetype)init
@@ -23,31 +28,35 @@
                 return nil;
             }];
         }];
+        
+        /**
+         **Note:** The `didSubscribe` block is called every time a new subscriber subscribes. Any side effects within the block will thus execute once for each subscription, not necessarily on one thread, and possibly even simultaneously!
+         */
+        @weakify(self);
+        _signInSingal = [RACSignal createSignal:^RACDisposable * _Nullable(id<RACSubscriber>  _Nonnull subscriber) {
+            @strongify(self);
+            [self signInWithUsername:self.username password:self.password complete:^(LoginState state) {
+                /*
+                 终止信号:
+                 -sendCompleted、-sendError:
+                 */
+                [subscriber sendNext:@(state)];
+                [subscriber sendCompleted]; //信号完成、释放
+                [self.additionalCommand execute:@(state)];
+            }];
+            return nil;
+        }];
     }
     return self;
 }
 
 - (RACSignal *)signInWithSingal:(NSString *)username password:(NSString *)password{
     [_additionalCommand execute:@(Logining)];
-    
-    @weakify(self);
-    return [RACSignal createSignal:^RACDisposable * _Nullable(id<RACSubscriber>  _Nonnull subscriber) {
-        @strongify(self);
-        [self signInWithUsername:username password:password complete:^(LoginState state) {
-            /*
-             终止信号:
-             -sendCompleted、-sendError:
-             */
-            [subscriber sendNext:@(state)];
-            [subscriber sendCompleted]; //信号完成、释放
-            [self.additionalCommand execute:@(state)];
-        }];
-        return nil;
-    }];
+    return _signInSingal;
 }
 
-- (void)signInWithUsername:(NSString *)username password:(NSString *)password complete:(RWSignInResponse)completeBlock {
-
+- (void)signInWithUsername:(NSString *)username password:(NSString *)password complete:(RWSignInResponse)completeBlock
+{
     double delayInSeconds = 2.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
