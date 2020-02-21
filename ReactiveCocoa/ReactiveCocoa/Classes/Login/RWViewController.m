@@ -54,9 +54,13 @@
         return @([self isValidPassword:value]);
     }];
     
-    RAC(_signInButton, enabled) = [RACSignal combineLatest:@[_validUsernameSignal, _validPasswordSignal] reduce:^id (NSNumber *userNameValid, NSNumber *passwordValid){
+    RACSignal *combineSignal = [RACSignal combineLatest:@[_validUsernameSignal, _validPasswordSignal] reduce:^id (NSNumber *userNameValid, NSNumber *passwordValid){
         return @(userNameValid.boolValue && passwordValid.boolValue);
     }];
+//    _signInButton.rac_command = [[RACCommand alloc] initWithEnabled:combineSignal signalBlock:^RACSignal *(id input) {
+//        return RACSignal.empty;
+//    }];
+    RAC(_signInButton, enabled) = combineSignal;
     
     RAC(_usernameTextField, backgroundColor) = [_validUsernameSignal map:^id _Nullable(NSNumber * _Nullable value) {
         return value.boolValue ? [UIColor clearColor] : [UIColor yellowColor];

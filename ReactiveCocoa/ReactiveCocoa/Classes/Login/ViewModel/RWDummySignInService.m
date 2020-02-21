@@ -11,7 +11,7 @@
 #import "RWDummySignInService.h"
 
 @interface RWDummySignInService ()
-@property (strong, nonatomic) RACSignal *signInSingal;
+
 
 @end
 
@@ -41,7 +41,7 @@
                  -sendCompleted、-sendError:
                  */
                 [subscriber sendNext:@(state)];
-                [subscriber sendCompleted]; //信号完成、释放
+                [subscriber sendCompleted]; //信号完成、释放，此后订阅器再向订阅内容发送消息，只有重新向订阅器订阅新内容
                 [self.additionalCommand execute:@(state)];
             }];
             return nil;

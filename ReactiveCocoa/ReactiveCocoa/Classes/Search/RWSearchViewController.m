@@ -34,14 +34,18 @@
     
     @weakify(self);
     _viewModel = [[RWSearchViewModel alloc] init];
+    [_viewModel.queryToOFFlickrWithText subscribeNext:^(id x) {
+        @strongify(self);
+        [self.tableView reloadData];
+    }];
     
     [[[[textDidChangeSignal filter:^BOOL(RACTuple * _Nullable value) {
         NSString *searchText = value.second;
         return searchText.length > 3;
     }] throttle:.5f] flattenMap:^__kindof RACSignal * _Nullable(id  _Nullable value) {
         @strongify(self);
-        return self.viewModel.queryAccessSignal;
-    }] subscribeNext:^(NSDictionary *dataDic) {
+        return self.viewModel.queryToOFFlickrWithText;
+    }] subscribeNext:^(id x) {
         @strongify(self);
         [self.tableView reloadData];
     } error:^(NSError * _Nullable error) {

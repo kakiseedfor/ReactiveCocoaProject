@@ -23,17 +23,9 @@
 
 - (void)updateViewCell:(RWSearchModel *)model{
     self.photoTitle.text = model.title;
-    @weakify(self);
-    [[model.imageSignal deliverOn:RACScheduler.mainThreadScheduler] subscribeNext:^(NSData *imageData) {
-        @strongify(self);
-        self.photoImage.image = [UIImage imageWithData:imageData];
+    RAC(self.photoImage,image) = [[model.imageSignal deliverOn:RACScheduler.mainThreadScheduler] map:^id(id value) {
+        return [UIImage imageWithData:value];
     }];
-}
-
-- (void)setSelected:(BOOL)selected animated:(BOOL)animated {
-    [super setSelected:selected animated:animated];
-
-    // Configure the view for the selected state
 }
 
 @end

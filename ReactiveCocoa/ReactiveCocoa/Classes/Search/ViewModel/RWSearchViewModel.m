@@ -6,7 +6,6 @@
 //  Copyright © 2020 kakiYen. All rights reserved.
 //
 
-#import <LinqToObjectiveC/NSArray+LinqExtensions.h>
 #import <objectiveflickr/ObjectiveFlickr.h>
 #import <ReactiveCocoa/RACEXTScope.h>
 #import "RWSearchViewModel.h"
@@ -15,7 +14,8 @@
 @interface RWSearchViewModel ()<OFFlickrAPIRequestDelegate>
 @property (strong, nonatomic) OFFlickrAPIRequest *offlickrRequest;
 @property (strong, nonatomic) OFFlickrAPIContext *flickrContext;
-@property (strong, nonatomic) NSMutableArray *requestArray;
+@property (strong, nonatomic) RACReplaySubject *replaySubject;  //共享回放信号
+@property (strong, nonatomic) RACSubject *racSubject;  //共享信号
 @property (strong, nonatomic) NSString *queryString;
 
 @end
@@ -26,68 +26,79 @@
 {
     self = [super init];
     if (self) {
+        _queryString = @"Hello";
         _photoArray = [NSMutableArray array];
-        _requestArray = [NSMutableArray array];
+        /**
+         RACSubject 共享信号:
+            多个订阅接受着共享一个订阅器。
+         RACReplaySubject   共享回放信号:
+            多少个回放数据，订阅器回放多少个。
+         */
+        _racSubject = RACSubject.subject;
+        _replaySubject = [RACReplaySubject replaySubjectWithCapacity:1];    //回放信号中存放最近回放数据的个数
         _flickrContext = [[OFFlickrAPIContext alloc] initWithAPIKey:@"45a4251dc1a3c9934f8ff8da7a8216ee" sharedSecret:@"f7d45ce1c8b4bf8d"];
-        
-        @weakify(self);
-        _queryAccessSignal = [RACSignal createSignal:^RACDisposable * _Nullable(id<RACSubscriber> _Nonnull subscriber) {
-            @strongify(self);
-            RACDisposable *disposable = [self subscriberDisposable:subscriber];
-            
-            if (self.requestArray.count) {
-                [self.requestArray addObject:subscriber];
-                return disposable;
-            }
-            
-            [self.requestArray addObject:subscriber];
-            [self queryToOFFlickrWithText:subscriber];
-            
-            return disposable;
-        }];
+        _offlickrRequest = [[OFFlickrAPIRequest alloc] initWithAPIContext:_flickrContext];
+        _offlickrRequest.delegate = self;
     }
     return self;
 }
 
-- (RACDisposable *)subscriberDisposable:(id<RACSubscriber> _Nonnull)subscriber{
-    @weakify(self);
-    return [RACDisposable disposableWithBlock:^{
-        @strongify(self);
-        [self.requestArray removeObject:subscriber];
-        
-        if (self.requestArray.count) {
-            [self queryToOFFlickrWithText:self.requestArray.firstObject];
-        }
-    }];
-}
-
-- (void)queryToOFFlickrWithText:(id<RACSubscriber> _Nonnull)subscriber{
-    _offlickrRequest = [[OFFlickrAPIRequest alloc] initWithAPIContext:_flickrContext];
-    _offlickrRequest.delegate = self;
-    
+- (RACSignal *)queryToOFFlickrWithText{
     [_offlickrRequest callAPIMethodWithGET:@"flickr.photos.search" arguments:self.paramDic];
     
     @weakify(self);
-    [[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] map:^id(RACTuple *value) {
+    RACSignal *signal = [[[[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] map:^id(RACTuple *value) {
         return value.second;
-    }] subscribeNext:^(NSDictionary *dataDic) {
+    }] map:^id(NSDictionary *dataDic) {
         @strongify(self);
-        NSLog(@"%@",dataDic);
         [self dealResponse:dataDic];
-        [subscriber sendNext:nil];
-        [subscriber sendCompleted];
-    } error:^(NSError *error) {
-        [subscriber sendError:error];
-    }];
+    }] publish] autoconnect];
+//    [ subscribeNext:^(NSDictionary *dataDic) {
+//        @strongify(self);
+//        [self dealResponse:dataDic];
+//        [self.replaySubject sendNext:self.photoArray];
+//        [self.replaySubject sendCompleted]; //信号完成、释放，此后订阅器再向订阅内容发送消息，只有重新向订阅器订阅新内容
+//    } error:^(NSError *error) {
+//        [self.replaySubject sendError:error];
+//    }];
+    
+    return signal;
 }
+
+//- (RACSignal *)queryToOFFlickrWithText{
+//    [_offlickrRequest callAPIMethodWithGET:@"flickr.photos.search" arguments:self.paramDic];
+//
+//    @weakify(self);
+//    [[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] map:^id(RACTuple *value) {
+//        return value.second;
+//    }] subscribeNext:^(NSDictionary *dataDic) {
+//        @strongify(self);
+//        [self dealResponse:dataDic];
+//        [self.replaySubject sendNext:self.photoArray];
+//        [self.replaySubject sendCompleted]; //信号完成、释放，此后订阅器再向订阅内容发送消息，只有重新向订阅器订阅新内容
+//    } error:^(NSError *error) {
+//        [self.replaySubject sendError:error];
+//    }];
+//
+//    return _replaySubject;
+//}
 
 - (void)dealResponse:(NSDictionary *)dataDic{
     NSArray *photoArray = [dataDic valueForKeyPath:@"photos.photo"];
+    
+    /**
+     1、将数组的值序列化，转化为序列流[Pull-driven]。
+     2、将信号流中的值转换为model。
+     3、将序列流转换为数组的值序列化。
+     
+     Push-driven : 在创建信号的时候，信号不会被立即赋值，之后才会被赋值.
+     Pull-driven : 在创建信号的同时序列中的值就会被确定下来，我们可以从流中一个个地查询值.
+     */
     @weakify(self);
-    _photoArray = [photoArray linq_select:^id(NSDictionary *item) {
+    _photoArray = [[photoArray.rac_sequence map:^id(NSDictionary *value) {
         @strongify(self);
-        return [[RWSearchModel alloc] initWith:item flickrContext:self.flickrContext];
-    }];
+        return [[RWSearchModel alloc] initWith:value flickrContext:self.flickrContext];
+    }] array];
 }
 
 - (NSDictionary *)paramDic{
