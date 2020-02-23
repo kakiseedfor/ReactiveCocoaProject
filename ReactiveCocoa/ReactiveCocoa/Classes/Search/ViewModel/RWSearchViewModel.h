@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface RWSearchViewModel : NSObject
 @property (strong, readonly, nonatomic) NSString *queryString;
 @property (strong, readonly, nonatomic) NSArray *photoArray;
+@property (strong, nonatomic) id<RACSubscriber> tempSubscriber;
 
 - (RACSignal *)queryToOFFlickrWithText;
 

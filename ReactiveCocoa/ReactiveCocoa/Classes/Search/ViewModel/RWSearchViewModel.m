@@ -43,42 +43,37 @@
     return self;
 }
 
+/**
+ -reduceEach: Unpacks RACTuple
+ */
 - (RACSignal *)queryToOFFlickrWithText{
-    [_offlickrRequest callAPIMethodWithGET:@"flickr.photos.search" arguments:self.paramDic];
-    
     @weakify(self);
-    RACSignal *signal = [[[[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] map:^id(RACTuple *value) {
-        return value.second;
+    RACSignal *signal = [[[[[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] reduceEach:^id(OFFlickrAPIRequest *inRequest,NSDictionary * inResponseDictionary){
+        return inResponseDictionary;
     }] map:^id(NSDictionary *dataDic) {
         @strongify(self);
         [self dealResponse:dataDic];
-    }] publish] autoconnect];
-//    [ subscribeNext:^(NSDictionary *dataDic) {
-//        @strongify(self);
-//        [self dealResponse:dataDic];
-//        [self.replaySubject sendNext:self.photoArray];
-//        [self.replaySubject sendCompleted]; //信号完成、释放，此后订阅器再向订阅内容发送消息，只有重新向订阅器订阅新内容
-//    } error:^(NSError *error) {
-//        [self.replaySubject sendError:error];
-//    }];
-    
+    }] catch:^RACSignal *(NSError *error) {
+        NSLog(@"%s %@",__FUNCTION__ , error.domain);
+        return RACSignal.empty;
+    }] publish] autoconnect];   //publish 内部使用了共享订阅器。
+    [_offlickrRequest callAPIMethodWithGET:@"flickr.photos.search" arguments:self.paramDic];
+
     return signal;
 }
 
 //- (RACSignal *)queryToOFFlickrWithText{
-//    [_offlickrRequest callAPIMethodWithGET:@"flickr.photos.search" arguments:self.paramDic];
-//
 //    @weakify(self);
 //    [[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] map:^id(RACTuple *value) {
 //        return value.second;
 //    }] subscribeNext:^(NSDictionary *dataDic) {
 //        @strongify(self);
 //        [self dealResponse:dataDic];
-//        [self.replaySubject sendNext:self.photoArray];
 //        [self.replaySubject sendCompleted]; //信号完成、释放，此后订阅器再向订阅内容发送消息，只有重新向订阅器订阅新内容
 //    } error:^(NSError *error) {
-//        [self.replaySubject sendError:error];
+//        NSLog(@"%s %@",__FUNCTION__ , error.domain);
 //    }];
+//    [_offlickrRequest callAPIMethodWithGET:@"flickr.photos.search" arguments:self.paramDic];
 //
 //    return _replaySubject;
 //}

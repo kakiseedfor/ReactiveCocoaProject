@@ -48,8 +48,6 @@
     }] subscribeNext:^(id x) {
         @strongify(self);
         [self.tableView reloadData];
-    } error:^(NSError * _Nullable error) {
-        NSLog(@"error = %@",error);
     } completed:^{
         NSLog(@"completed");
     }];

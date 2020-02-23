@@ -99,11 +99,10 @@
      
      Note that operators applied _after_ -flattenMap: behave differently from operators _within_ -flattenMap:. See the Examples section below.[放在 -flattenMap 块内执行的操作与放在 -flattenMap 块外执行的操作是不一样的，前者多次执行，后者执行一次]
      */
-    RACSignal *signal = [[_signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] flattenMap:^RACSignal * _Nullable(__kindof UIControl * _Nullable value) {
+    [[[_signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] flattenMap:^RACSignal * _Nullable(__kindof UIControl * _Nullable value) {
         @strongify(self);
-        return [self.signInService signInWithSingal:self.usernameTextField.text password:self.passwordTextField.text];
-    }];
-    [signal subscribeNext:^(NSNumber * _Nullable state) {
+        return self.signInService.signInWithSingal;
+    }] subscribeNext:^(NSNumber * _Nullable state) {
         if (state.integerValue == LoginFinish) {
             [CentreMediator.shareCentreMediator CM_PushRWSearchViewController];
         }

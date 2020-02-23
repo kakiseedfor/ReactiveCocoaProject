@@ -21,6 +21,10 @@
     // Initialization code
 }
 
+/**
+ 信号可以重复被监听，但不能重复绑定。
+ 所以 model.imageSignal 不是同一个的话，将报信号已被绑定的错误。
+ */
 - (void)updateViewCell:(RWSearchModel *)model{
     self.photoTitle.text = model.title;
     RAC(self.photoImage,image) = [[model.imageSignal deliverOn:RACScheduler.mainThreadScheduler] map:^id(id value) {

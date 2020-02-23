@@ -11,7 +11,7 @@
 #import "RWDummySignInService.h"
 
 @interface RWDummySignInService ()
-
+@property (strong, nonatomic) RACSignal *signInSingal;
 
 @end
 
@@ -35,13 +35,16 @@
         @weakify(self);
         _signInSingal = [RACSignal createSignal:^RACDisposable * _Nullable(id<RACSubscriber>  _Nonnull subscriber) {
             @strongify(self);
-            [self signInWithUsername:self.username password:self.password complete:^(LoginState state) {
+            
+            @weakify(self);
+            [self signInWithUsername:^(LoginState state) {
+                @strongify(self);
                 /*
                  终止信号:
                  -sendCompleted、-sendError:
                  */
                 [subscriber sendNext:@(state)];
-                [subscriber sendCompleted]; //信号完成、释放，此后订阅器再向订阅内容发送消息，只有重新向订阅器订阅新内容
+                [subscriber sendCompleted]; //订阅器完成、释放，此后订阅器不再向订阅者发送消息，只有重新开启订阅器订阅新内容
                 [self.additionalCommand execute:@(state)];
             }];
             return nil;
@@ -50,17 +53,20 @@
     return self;
 }
 
-- (RACSignal *)signInWithSingal:(NSString *)username password:(NSString *)password{
+- (RACSignal *)signInWithSingal{
+    /**
+     Invoke the `signalBlock` given at the time of initialization.[意味着每次都会执行signalBlock]，故signalBlock返回的 RACSignal信号的 RACSubscriber订阅器 没有执行sendCompleted，可能会累积RACSignal信号，造成内存空间消耗。
+     */
     [_additionalCommand execute:@(Logining)];
     return _signInSingal;
 }
 
-- (void)signInWithUsername:(NSString *)username password:(NSString *)password complete:(RWSignInResponse)completeBlock
+- (void)signInWithUsername:(RWSignInResponse)completeBlock
 {
     double delayInSeconds = 2.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        LoginState state = ([username isEqualToString:@"user"] && [password isEqualToString:@"password"]) ? LoginFinish : LoginFail;
+        LoginState state = ([self.username isEqualToString:@"user"] && [self.password isEqualToString:@"password"]) ? LoginFinish : LoginFail;
         completeBlock(state);
     });
 }
