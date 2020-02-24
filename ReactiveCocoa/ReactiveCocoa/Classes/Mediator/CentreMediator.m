@@ -158,7 +158,6 @@
         }
         NSLog(@"%@",typeName);
     }
-    va_end(parameters);
     [invocation invoke];
 }
 

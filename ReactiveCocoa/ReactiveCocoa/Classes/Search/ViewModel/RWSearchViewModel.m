@@ -48,11 +48,11 @@
  */
 - (RACSignal *)queryToOFFlickrWithText{
     @weakify(self);
-    RACSignal *signal = [[[[[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] reduceEach:^id(OFFlickrAPIRequest *inRequest,NSDictionary * inResponseDictionary){
-        return inResponseDictionary;
-    }] map:^id(NSDictionary *dataDic) {
+    RACSignal *signal = [[[[[self rac_signalForSelector:@selector(flickrAPIRequest:didCompleteWithResponse:) fromProtocol:@protocol(OFFlickrAPIRequestDelegate)] reduceEach:^id(OFFlickrAPIRequest *inRequest,NSDictionary * inResponseDictionary)
+    {
         @strongify(self);
-        [self dealResponse:dataDic];
+        [self dealResponse:inResponseDictionary];
+        return self.photoArray;
     }] catch:^RACSignal *(NSError *error) {
         NSLog(@"%s %@",__FUNCTION__ , error.domain);
         return RACSignal.empty;

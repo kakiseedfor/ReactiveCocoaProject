@@ -40,6 +40,12 @@
      password.rac_textSignal->map[信号NSString类型转换]->Boolean->map[信号Boolean类型转换]->UIColor类型->backgroundColor
      */
     
+    /*
+     RAC宏定义的自动提示原理：
+        (((void)(NO && ((void)OBJ.PATH, NO)), # PATH)) 注意#将后面参数转成字面字符串。
+        1、int c = ((void)a, b) -> int c = b
+        2、利用.语法让编译器自动弹出提示
+     */
     @weakify(self);
     RAC(_signInService, username) = _usernameTextField.rac_textSignal;
     RAC(_signInService, password) = _passwordTextField.rac_textSignal;
