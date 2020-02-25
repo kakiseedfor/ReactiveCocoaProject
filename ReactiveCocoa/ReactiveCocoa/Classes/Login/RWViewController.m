@@ -76,6 +76,9 @@
         return value.boolValue ? [UIColor clearColor] : [UIColor yellowColor];
     }];
     
+    /*
+     创建 RACCommand 时，产生的副作用可能会重复创建信号，所以executionSignals可执行信号可能是多个。
+     */
     [_signInService.additionalCommand.executionSignals.switchToLatest subscribeNext:^(NSNumber * _Nullable loginState) {
         @strongify(self);
         switch (loginState.integerValue) {
@@ -104,6 +107,13 @@
      reduce block的入参和源信号一一对应
      
      Note that operators applied _after_ -flattenMap: behave differently from operators _within_ -flattenMap:. See the Examples section below.[放在 -flattenMap 块内执行的操作与放在 -flattenMap 块外执行的操作是不一样的，前者多次执行，后者执行一次]
+     
+     ●-flattenMap: -> -bind: -> -createSignal: -> 返回新Signal；
+     ●subscribe 新signal -> 新signal side effect -> subscribe 原始signal -> 原始signal side effect；
+     ●原始signal的subscribe -sendNext: -> 获取转换signal -> subscribe 转换signal -> 转换signal side effect；
+     ●转换signal的subscribe -sendNext: -> 新signal subscribe -sendNext:
+     
+     注意只有 原始signal、新signal、转换signal 都执行了 -sendCompleted，completedBlock才会执行
      */
     [[[_signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] flattenMap:^RACSignal * _Nullable(__kindof UIControl * _Nullable value) {
         @strongify(self);

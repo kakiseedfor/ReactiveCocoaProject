@@ -42,6 +42,7 @@
                 /*
                  终止信号:
                  -sendCompleted、-sendError:
+                 执行sendCompleted，可能会累积RACSignal信号，造成内存空间消耗。
                  */
                 [subscriber sendNext:@(state)];
                 [subscriber sendCompleted]; //订阅器完成、释放，此后订阅器不再向订阅者发送消息，只有重新开启订阅器订阅新内容
@@ -55,7 +56,8 @@
 
 - (RACSignal *)signInWithSingal{
     /**
-     Invoke the `signalBlock` given at the time of initialization.[意味着每次都会执行signalBlock]，故signalBlock返回的 RACSignal信号的 RACSubscriber订阅器 没有执行sendCompleted，可能会累积RACSignal信号，造成内存空间消耗。
+     Invoke the `signalBlock` given at the time of
+     虽然每次 signalBlock 都会被调用，但是内部已处理是否第一次调用。
      */
     [_additionalCommand execute:@(Logining)];
     return _signInSingal;
