@@ -68,6 +68,10 @@ static void RWPerform(void *info);
     __weak typeof(self) weakSelf = self;
     timerRef = CFRunLoopTimerCreateWithHandler(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent() + 3, 3, 0, 0, ^(CFRunLoopTimerRef timer) {
         __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        
         [strongSelf->threadLock lock];
         if (strongSelf->operationArray.count) {
             [strongSelf->threadLock unlock];
@@ -178,16 +182,24 @@ static void RWPerform(void *info){
     [self removeObserver:self forKeyPath:@"isReady" context:NULL];
     [self removeObserver:self forKeyPath:@"isFinished" context:NULL];
     [self removeObserver:self forKeyPath:@"isExecuting" context:NULL];
+    NSLog(@"%s",__FUNCTION__);
 }
 
 - (instancetype)init
 {
     self = [super init];
     if (self) {
-        self.shouldReady = self.isReady;
+        _shouldReady = self.isReady;
         __weak typeof(self) weakSelf = self;
         self.completionBlock = ^{
-            weakSelf.shouldExecuting = NO;
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            
+            strongSelf.ready = NO;
+            strongSelf.executing = NO;
+            strongSelf.finished = NO;
         };
         [self addObserver:self forKeyPath:@"isReady" options:NSKeyValueObservingOptionNew context:NULL];
         [self addObserver:self forKeyPath:@"isFinished" options:NSKeyValueObservingOptionNew context:NULL];
@@ -197,7 +209,7 @@ static void RWPerform(void *info){
 }
 
 - (void)start{
-    self.shouldReady = self.isReady;
+    self.ready = YES;
 }
 
 - (void)main{
@@ -205,46 +217,50 @@ static void RWPerform(void *info){
         return;
     }
     
-    self.shouldExecuting = YES;
+    self.executing = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
         !self.executeBlock ?: self.executeBlock();
         self.executeBlock = nil;
     });
-    self.shouldFinished = YES;
+    self.finished = YES;
 }
 
 - (void)cancel{
     [super cancel];
-    self.shouldFinished = YES;
+    self.finished = YES;
+}
+
+- (BOOL)isReady{
+    return _shouldReady;
 }
 
 - (BOOL)isFinished{
-    return self.shouldFinished;
+    return _shouldFinished;
 }
 
 - (BOOL)isExecuting{
-    return self.shouldExecuting;
+    return _shouldExecuting;
 }
 
 - (BOOL)isAsynchronous{
     return YES;
 }
 
-- (void)setShouldReady:(BOOL)shouldReady{
+- (void)setReady:(BOOL)ready{
     [self willChangeValueForKey:@"isReady"];
-    _shouldReady = shouldReady;
+    _shouldReady = ready;
     [self didChangeValueForKey:@"isReady"];
 }
 
-- (void)setShouldFinished:(BOOL)shouldFinished{
+- (void)setFinished:(BOOL)finished{
     [self willChangeValueForKey:@"isFinished"];
-    _shouldFinished = shouldFinished;
+    _shouldFinished = finished;
     [self didChangeValueForKey:@"isFinished"];
 }
 
-- (void)setShouldExecuting:(BOOL)shouldExecuting{
+- (void)setExecuting:(BOOL)executing{
     [self willChangeValueForKey:@"isExecuting"];
-    _shouldExecuting = shouldExecuting;
+    _shouldExecuting = executing;
     [self didChangeValueForKey:@"isExecuting"];
 }
 
