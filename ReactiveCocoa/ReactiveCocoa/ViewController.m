@@ -200,6 +200,7 @@ static void RWPerform(void *info){
             strongSelf.ready = NO;
             strongSelf.executing = NO;
             strongSelf.finished = NO;
+            strongSelf.executeBlock = nil;
         };
         [self addObserver:self forKeyPath:@"isReady" options:NSKeyValueObservingOptionNew context:NULL];
         [self addObserver:self forKeyPath:@"isFinished" options:NSKeyValueObservingOptionNew context:NULL];
@@ -220,7 +221,6 @@ static void RWPerform(void *info){
     self.executing = YES;
     dispatch_async(dispatch_get_main_queue(), ^{
         !self.executeBlock ?: self.executeBlock();
-        self.executeBlock = nil;
     });
     self.finished = YES;
 }
