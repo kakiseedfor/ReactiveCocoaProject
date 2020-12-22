@@ -13,6 +13,7 @@
 #import "RWSearchViewCell.h"
 
 @interface RWSearchViewController ()<UISearchBarDelegate, UITableViewDelegate, UITableViewDataSource>
+@property (weak, nonatomic) IBOutlet UIImageView *BGImage;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 @property (weak, nonatomic) IBOutlet UISearchBar *searchBar;
 @property (strong, nonatomic) RWSearchViewModel *viewModel;
@@ -57,6 +58,34 @@
         UISearchBar *searchBar = value.first;
         [searchBar resignFirstResponder];
     }];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSString *imagePath = [NSBundle.mainBundle pathForResource:@"background" ofType:@"jpg"];
+        UIImage *tempImage = [[UIImage alloc] initWithContentsOfFile:imagePath];
+        
+        /**
+         *放射变换首先考虑的是平移，再进行旋转或绕轴旋转。
+         */
+        CGAffineTransform transform = CGAffineTransformIdentity;
+        transform = CGAffineTransformTranslate(transform, tempImage.size.width, tempImage.size.height);
+        transform = CGAffineTransformRotate(transform, M_PI);
+        transform = CGAffineTransformTranslate(transform, tempImage.size.width, 0.f);
+        transform = CGAffineTransformScale(transform, -1.f, 1.f);
+        
+        CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceGray();
+        CGContextRef contextRef = CGBitmapContextCreate(NULL, tempImage.size.width, tempImage.size.height, 8, 0, colorSpaceRef, kCGImageAlphaNone);
+        CGContextConcatCTM(contextRef, transform);
+        CGContextDrawImage(contextRef, CGRectMake(0.f, 0.f, tempImage.size.width, tempImage.size.height), tempImage.CGImage);
+        CGImageRef imageRef = CGBitmapContextCreateImage(contextRef);
+        CGColorSpaceRelease(colorSpaceRef);
+        CGContextRelease(contextRef);
+        
+        UIImage *renderImage = [UIImage imageWithCGImage:imageRef scale:tempImage.scale orientation:tempImage.imageOrientation];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.BGImage.image = renderImage;
+        });
+    });
+    
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
