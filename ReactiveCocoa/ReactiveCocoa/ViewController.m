@@ -289,6 +289,14 @@ static void RWPerform(void *info){
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+    
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(backgroundTimeNotification:) name:UIApplicationBackgroundTimeWillBeRunningOut object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(backgroundTimeNotification:) name:UIApplicationBackgroundTimeDidRunningOut object:nil];
+}
+
+- (void)backgroundTimeNotification:(NSNotification *)notification{
+    NSLog(@"%@",NSThread.currentThread);
+    NSLog(@"%@",notification.name);
 }
 
 - (IBAction)beginAction:(id)sender {

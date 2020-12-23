@@ -20,4 +20,7 @@
     #import "CentreMediator+Search.h"
 #endif
 
+FOUNDATION_EXPORT NSNotificationName const UIApplicationBackgroundTimeWillBeRunningOut;
+FOUNDATION_EXPORT NSNotificationName const UIApplicationBackgroundTimeDidRunningOut;
+
 #define StoryboardWithNameAndIdentifier(name, identifier) [[UIStoryboard storyboardWithName:name bundle:NSBundle.mainBundle] instantiateViewControllerWithIdentifier:identifier]
