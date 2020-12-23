@@ -44,15 +44,19 @@ NSNotificationName const UIApplicationBackgroundTimeDidRunningOut = @"UIApplicat
     dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
     dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC, 0);
     dispatch_source_set_event_handler(timer, ^{
-        if (!(application.backgroundTimeRemaining < CGFLOAT_MAX) && !(self.taskIdentifier)) {
-            NSLog(@"the app don't requests additional background execution time!");
-            dispatch_suspend(timer);
-            return;
+        if (!(application.backgroundTimeRemaining < CGFLOAT_MAX)) {
+            if (self.taskIdentifier) {
+                return;
+            }else{
+                NSLog(@"the app don't requests additional background execution time!");
+                dispatch_suspend(timer);
+                return;
+            }
         }
         
-        if (!(application.backgroundTimeRemaining > 0.f)) {
-            [NSNotificationCenter.defaultCenter postNotificationName:UIApplicationBackgroundTimeDidRunningOut object:application];
+        if (!((NSInteger)application.backgroundTimeRemaining > 0)) {
             NSLog(@"%@",[NSString stringWithFormat:@"the app’s remaining background time does reach %f",application.backgroundTimeRemaining]);
+            [NSNotificationCenter.defaultCenter postNotificationName:UIApplicationBackgroundTimeDidRunningOut object:application];
             dispatch_suspend(timer);
             return;
         }
