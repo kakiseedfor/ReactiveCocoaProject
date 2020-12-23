@@ -41,31 +41,25 @@ NSNotificationName const UIApplicationBackgroundTimeDidRunningOut = @"UIApplicat
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
     
-    dispatch_async(dispatch_queue_create("additional.background.execution", DISPATCH_QUEUE_SERIAL), ^{
-        NSString *prompt = @"";
-        while (YES) {
-            if (!(application.backgroundTimeRemaining < CGFLOAT_MAX)) {
-                if (self.taskIdentifier) {
-                    continue;
-                }else{
-                    prompt = @"the app don't requests additional background execution time!";
-                    break;
-                }
-            }
-            
-            if (!(application.backgroundTimeRemaining > 0.f)) {
-                [NSNotificationCenter.defaultCenter postNotificationName:UIApplicationBackgroundTimeDidRunningOut object:application];
-                prompt = [NSString stringWithFormat:@"the app’s remaining background time does reach %f",application.backgroundTimeRemaining];
-                break;
-            }
-            
-            NSLog(@"the app’s remaining background time %f",application.backgroundTimeRemaining);
-            sleep(3);
+    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+    dispatch_source_set_timer(timer, DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC, 0);
+    dispatch_source_set_event_handler(timer, ^{
+        if (!(application.backgroundTimeRemaining < CGFLOAT_MAX) && !(self.taskIdentifier)) {
+            NSLog(@"the app don't requests additional background execution time!");
+            dispatch_suspend(timer);
+            return;
         }
-        NSLog(@"%@",prompt);
         
-        [self applicationEndBackgroundTask:application];
+        if (!(application.backgroundTimeRemaining > 0.f)) {
+            [NSNotificationCenter.defaultCenter postNotificationName:UIApplicationBackgroundTimeDidRunningOut object:application];
+            NSLog(@"%@",[NSString stringWithFormat:@"the app’s remaining background time does reach %f",application.backgroundTimeRemaining]);
+            dispatch_suspend(timer);
+            return;
+        }
+        
+        NSLog(@"the app’s remaining background time %f",application.backgroundTimeRemaining);
     });
+    dispatch_resume(timer);
 }
 
 
