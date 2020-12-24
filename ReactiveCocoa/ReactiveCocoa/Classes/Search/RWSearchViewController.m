@@ -81,6 +81,7 @@
         CGContextRelease(contextRef);
         
         UIImage *renderImage = [UIImage imageWithCGImage:imageRef scale:tempImage.scale orientation:tempImage.imageOrientation];
+        CGImageRelease(imageRef);
         dispatch_async(dispatch_get_main_queue(), ^{
             self.BGImage.image = renderImage;
         });
