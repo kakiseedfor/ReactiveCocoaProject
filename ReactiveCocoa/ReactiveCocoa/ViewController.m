@@ -214,6 +214,7 @@ static void RWPerform(void *info){
 
 - (void)main{
     if (self.isCancelled) {
+        self.finished = YES;
         return;
     }
     
